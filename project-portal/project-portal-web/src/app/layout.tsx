@@ -1,8 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import PortalNavbar from '@/components/PortalNavbar';
-import PortalSidebar from '@/components/PortalSidebar';
 import { FarmerProvider } from '@/contexts/FarmerContext';
 import { Toaster } from 'sonner';
 import ToastContainer from '@/components/ui/Toast';
@@ -25,13 +23,7 @@ export default function RootLayout({
         <FarmerProvider>
           <Toaster position="top-right" richColors closeButton />
           <ToastContainer />
-          <PortalNavbar />
-          <div className="flex">
-            <PortalSidebar />
-            <main className="flex-1 p-4 md:p-6 lg:p-8 transition-all duration-300">
-              {children}
-            </main>
-          </div>
+          {children}
         </FarmerProvider>
       </body>
     </html>

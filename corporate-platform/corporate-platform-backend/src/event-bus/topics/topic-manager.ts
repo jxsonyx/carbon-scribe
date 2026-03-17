@@ -9,6 +9,13 @@ export class TopicManager implements OnModuleInit {
   constructor(private readonly kafkaService: KafkaService) {}
 
   async onModuleInit() {
+    if (!this.kafkaService.isEnabled()) {
+      this.logger.warn(
+        'Skipping Kafka topic initialization because Kafka is disabled.',
+      );
+      return;
+    }
+
     await this.createTopics();
   }
 

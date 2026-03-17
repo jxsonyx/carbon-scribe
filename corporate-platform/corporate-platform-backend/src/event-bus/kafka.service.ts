@@ -13,9 +13,17 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
   private kafka: Kafka;
   private producer: Producer;
   private admin: Admin;
+  private readonly kafkaEnabled: boolean;
 
   constructor(private readonly configService: ConfigService) {
     const kafkaConfig = this.configService.getKafkaConfig();
+    this.kafkaEnabled = kafkaConfig.brokers.length > 0;
+
+    if (!this.kafkaEnabled) {
+      this.logger.warn(
+        'Kafka is disabled because KAFKA_BROKERS is not configured. Event bus features will be unavailable.',
+      );
+    }
 
     let sasl: any = undefined;
     if (kafkaConfig.sasl) {
@@ -54,6 +62,10 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async connect() {
+    if (!this.kafkaEnabled) {
+      return;
+    }
+
     this.logger.log('Connecting to Kafka...');
     await this.producer.connect();
     await this.admin.connect();
@@ -61,21 +73,41 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async disconnect() {
+    if (!this.kafkaEnabled) {
+      return;
+    }
+
     this.logger.log('Disconnecting from Kafka...');
     await this.producer.disconnect();
     await this.admin.disconnect();
     this.logger.log('Kafka disconnected successfully.');
   }
 
+  isEnabled(): boolean {
+    return this.kafkaEnabled;
+  }
+
   getProducer(): Producer {
+    if (!this.kafkaEnabled) {
+      throw new Error('Kafka is disabled: KAFKA_BROKERS is not configured');
+    }
+
     return this.producer;
   }
 
   getAdmin(): Admin {
+    if (!this.kafkaEnabled) {
+      throw new Error('Kafka is disabled: KAFKA_BROKERS is not configured');
+    }
+
     return this.admin;
   }
 
   createConsumer(groupId: string): Consumer {
+    if (!this.kafkaEnabled) {
+      throw new Error('Kafka is disabled: KAFKA_BROKERS is not configured');
+    }
+
     return this.kafka.consumer({ groupId });
   }
 }

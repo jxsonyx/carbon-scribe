@@ -17,12 +17,14 @@ import { SecurityModule } from './security/security.module';
 import { EventBusModule } from './event-bus/event-bus.module';
 import { ApiKeyModule } from './api-key/api-key.module';
 import { PortfolioModule } from './portfolio/portfolio.module';
+import { RbacModule } from './rbac/rbac.module';
 
 @Module({
   imports: [
     ConfigModule,
     LoggerModule,
     SecurityModule,
+    RbacModule,
     RetirementModule,
     ComplianceModule,
     MarketplaceModule,

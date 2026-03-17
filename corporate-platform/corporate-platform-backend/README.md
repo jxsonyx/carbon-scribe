@@ -127,6 +127,74 @@ Before you begin, ensure you have installed:
   npx prisma migrate dev --name init
 ```
 
+## Kafka Setup (Required For Event Bus)
+
+This service uses Kafka for the event bus and topic bootstrap on startup.
+If Kafka is not reachable from `KAFKA_BROKERS`, event-driven features (producer,
+consumer, DLQ, topic management) will not work.
+
+### Start Kafka Locally (Docker)
+
+If you already have Zookeeper running on `localhost:2181`, start Kafka with:
+
+```bash
+docker run -d --name kafka \
+  -p 9092:9092 \
+  -e KAFKA_BROKER_ID=1 \
+  -e KAFKA_ZOOKEEPER_CONNECT=host.docker.internal:2181 \
+  -e KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092 \
+  -e KAFKA_LISTENERS=PLAINTEXT://0.0.0.0:9092 \
+  -e KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1 \
+  confluentinc/cp-kafka:7.5.0
+```
+
+On Linux, if `host.docker.internal` is not available, use your host IP or run
+Kafka and Zookeeper in the same Docker network.
+
+### Verify Kafka Connectivity
+
+```bash
+nc -zv localhost 9092
+```
+
+On successful backend startup, you should see logs similar to:
+
+- `Kafka connected successfully.`
+- `Creating ... Kafka topics...`
+- `Topics created successfully.`
+
+## Environment Configuration
+
+Copy `.env.example` to `.env` and set values for your local machine:
+
+```bash
+cp .env.example .env
+```
+
+Minimum properties contributors should set for reliable local startup:
+
+```env
+NODE_ENV=development
+PORT=4000
+API_PREFIX=api/v1
+
+DATABASE_URL=postgresql://username:password@localhost:5432/db
+
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
+
+KAFKA_BROKERS=localhost:9092
+KAFKA_CLIENT_ID=corporate-platform-backend
+KAFKA_SSL_ENABLED=false
+KAFKA_RETRY_INITIAL=300
+KAFKA_RETRY_MAX=5
+
+JWT_SECRET=replace-with-a-strong-secret
+JWT_EXPIRY=15m
+```
+
+`PORT=4000` is recommended locally to avoid conflicts with other services on `3000`.
+
 ## 📁 Project Structure
 ```
 corporate-platform-backend/

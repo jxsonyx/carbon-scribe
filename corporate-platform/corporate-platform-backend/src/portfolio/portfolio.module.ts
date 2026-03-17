@@ -6,8 +6,10 @@ import { PerformanceService } from './services/performance.service';
 import { CompositionService } from './services/composition.service';
 import { TimelineService } from './services/timeline.service';
 import { RiskService } from './services/risk.service';
+import { SecurityModule } from '../security/security.module';
 
 @Module({
+  imports: [SecurityModule],
   providers: [
     PortfolioService,
     SummaryService,

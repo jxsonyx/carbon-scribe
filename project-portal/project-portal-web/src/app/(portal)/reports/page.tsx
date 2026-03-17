@@ -9,7 +9,6 @@ import {
   BarChart2,
   Database,
   LayoutDashboard,
-  Plus,
 } from 'lucide-react';
 import ReportsList from '@/components/reports/ReportsList';
 import ReportBuilder from '@/components/reports/ReportBuilder';

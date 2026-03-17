@@ -3,7 +3,6 @@
 import ProtectedRoute from '@/components/ProtectedRoute';
 import PortalNavbar from '@/components/PortalNavbar';
 import PortalSidebar from '@/components/PortalSidebar';
-import ToastContainer from '@/components/ui/Toast';
 
 export default function PortalLayout({
   children,
@@ -13,7 +12,6 @@ export default function PortalLayout({
   return (
     // <ProtectedRoute> uncomment when backend auth is implemented
     <>
-      <ToastContainer />
       <PortalNavbar />
       <div className="flex">
         <PortalSidebar />
