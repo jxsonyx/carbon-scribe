@@ -19,6 +19,8 @@ import { ApiKeyModule } from './api-key/api-key.module';
 import { PortfolioModule } from './portfolio/portfolio.module';
 import { IpfsModule } from './ipfs/ipfs.module';
 import { RbacModule } from './rbac/rbac.module';
+import { FrameworkRegistryModule } from './framework-registry/framework-registry.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -26,6 +28,7 @@ import { RbacModule } from './rbac/rbac.module';
     LoggerModule,
     SecurityModule,
     RbacModule,
+    ScheduleModule.forRoot(),
     RetirementModule,
     ComplianceModule,
     MarketplaceModule,
@@ -39,6 +42,7 @@ import { RbacModule } from './rbac/rbac.module';
     ApiKeyModule,
     PortfolioModule,
     IpfsModule,
+    FrameworkRegistryModule,
   ],
   controllers: [AppController],
   providers: [AppService],
