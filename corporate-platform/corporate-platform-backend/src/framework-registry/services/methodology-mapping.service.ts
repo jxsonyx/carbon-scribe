@@ -182,7 +182,7 @@ export class MethodologyMappingService {
               userId,
             );
             mappingsCreated.push(mapping);
-          } catch (_error) {
+          } catch {
             // Mapping might already exist, skip
             this.logger.debug(
               `Auto-mapping already exists for methodology ${methodology.id} and framework ${framework.id}`,
