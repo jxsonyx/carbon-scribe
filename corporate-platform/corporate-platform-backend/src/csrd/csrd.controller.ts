@@ -5,15 +5,23 @@ import {
   DisclosureQueryDto,
   RecordDisclosureDto,
 } from './dto/disclosure-query.dto';
-import { CorporateAuthGuard } from '../shared/guards/corporate-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { PermissionsGuard } from '../rbac/guards/permissions.guard';
+import { IpWhitelistGuard } from '../security/guards/ip-whitelist.guard';
+import { Permissions } from '../rbac/decorators/permissions.decorator';
+import {
+  COMPLIANCE_VIEW,
+  COMPLIANCE_SUBMIT,
+} from '../rbac/constants/permissions.constants';
 import { CompanyId } from '../shared/decorators/company-id.decorator';
 
 @Controller('api/v1/csrd')
-@UseGuards(CorporateAuthGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard, IpWhitelistGuard)
 export class CsrdController {
   constructor(private readonly csrdService: CsrdService) {}
 
   @Post('materiality/assess')
+  @Permissions(COMPLIANCE_SUBMIT)
   async assessMateriality(
     @CompanyId() companyId: string,
     @Body() dto: CreateMaterialityAssessmentDto,
@@ -22,11 +30,13 @@ export class CsrdController {
   }
 
   @Get('materiality/current')
+  @Permissions(COMPLIANCE_VIEW)
   async getCurrentMateriality(@CompanyId() companyId: string) {
     return this.csrdService.getCurrentMateriality(companyId);
   }
 
   @Post('disclosures/record')
+  @Permissions(COMPLIANCE_SUBMIT)
   async recordDisclosure(
     @CompanyId() companyId: string,
     @Body() dto: RecordDisclosureDto,
@@ -35,6 +45,7 @@ export class CsrdController {
   }
 
   @Get('disclosures')
+  @Permissions(COMPLIANCE_VIEW)
   async listDisclosures(
     @CompanyId() companyId: string,
     @Query() query: DisclosureQueryDto,
@@ -43,11 +54,13 @@ export class CsrdController {
   }
 
   @Get('disclosures/requirements')
+  @Permissions(COMPLIANCE_VIEW)
   async getRequirements(@Query('standard') standard: string) {
     return this.csrdService.getRequirements(standard);
   }
 
   @Post('reports/generate')
+  @Permissions(COMPLIANCE_SUBMIT)
   async generateReport(
     @CompanyId() companyId: string,
     @Body('year') year: number,
@@ -56,11 +69,13 @@ export class CsrdController {
   }
 
   @Get('reports')
+  @Permissions(COMPLIANCE_VIEW)
   async listReports(@CompanyId() companyId: string) {
     return this.csrdService.listReports(companyId);
   }
 
   @Get('readiness')
+  @Permissions(COMPLIANCE_VIEW)
   async getReadiness(@CompanyId() companyId: string) {
     return this.csrdService.getReadinessScorecard(companyId);
   }
