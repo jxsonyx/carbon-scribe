@@ -22,6 +22,8 @@ import { RbacModule } from './rbac/rbac.module';
 import { CreditModule } from './credit/credit.module';
 import { FrameworkRegistryModule } from './framework-registry/framework-registry.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { TenantModule } from './multi-tenant/tenant.module';
+import { TenantMiddleware } from './multi-tenant/middleware/tenant.middleware';
 
 @Module({
   imports: [
@@ -45,12 +47,15 @@ import { ScheduleModule } from '@nestjs/schedule';
     IpfsModule,
     CreditModule,
     FrameworkRegistryModule,
+    TenantModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(RequestLoggerMiddleware).forRoutes('*');
+    consumer
+      .apply(RequestLoggerMiddleware, TenantMiddleware)
+      .forRoutes('*');
   }
 }
