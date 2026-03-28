@@ -17,6 +17,7 @@ import (
 	"carbon-scribe/project-portal/project-portal-backend/internal/config"
 	"carbon-scribe/project-portal/project-portal-backend/internal/documents"
 	"carbon-scribe/project-portal/project-portal-backend/internal/financing"
+	"carbon-scribe/project-portal/project-portal-backend/internal/financing/tokenization/minting"
 	"carbon-scribe/project-portal/project-portal-backend/internal/geospatial"
 	"carbon-scribe/project-portal/project-portal-backend/internal/health"
 	"carbon-scribe/project-portal/project-portal-backend/internal/integration"
@@ -102,7 +103,10 @@ func main() {
 	methodologyService := methodology.NewService(methodologyRepo, methodology.NewContractClientFromEnv())
 	methodologyHandler := methodology.NewHandler(methodologyService)
 
-	projectService := project.NewService(projectRepo, methodologyService)
+	mintingService := minting.NewService(db, nil)
+	mintingHandler := minting.NewHandler(mintingService)
+
+	projectService := project.NewService(projectRepo, methodologyService, mintingService)
 	projectHandler := project.NewHandler(projectService)
 
 	// Initialize document management service
@@ -242,6 +246,7 @@ func main() {
 
 		// Register financing routes under v1
 		financingHandler.RegisterRoutes(v1)
+		mintingHandler.RegisterRoutes(v1)
 
 		// Ping endpoint for testing
 		v1.GET("/ping", func(c *gin.Context) {
