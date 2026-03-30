@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../shared/database/prisma.service';
-import { CbamSectorType } from '../interfaces/cbam-goods.interface';
 
 interface QuarterlyReportGeneration {
   companyId: string;
@@ -177,7 +176,7 @@ export class QuarterlyReportService {
     });
   }
 
-  async getUpcomingDeadlines(companyId: string): Promise<DeadlineInfo[]> {
+  async getUpcomingDeadlines(): Promise<DeadlineInfo[]> {
     const deadlines: DeadlineInfo[] = [];
     const now = new Date();
     const currentYear = now.getFullYear();

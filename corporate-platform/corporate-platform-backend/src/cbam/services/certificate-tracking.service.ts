@@ -2,17 +2,6 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../shared/database/prisma.service';
 import { SecurityService } from '../../security/security.service';
 
-interface CertificateTransaction {
-  companyId: string;
-  certificatesPurchased: number;
-  certificatesSurrendered: number;
-  averagePrice: number;
-  period: {
-    year: number;
-    quarter: number;
-  };
-}
-
 @Injectable()
 export class CertificateTrackingService {
   constructor(

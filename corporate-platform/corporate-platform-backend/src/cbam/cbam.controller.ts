@@ -154,7 +154,7 @@ export class CbamController {
 
   // Deadlines
   @Get('deadlines')
-  async getUpcomingDeadlines(@Headers('x-company-id') companyId: string) {
-    return this.cbamService.getUpcomingDeadlines(companyId);
+  async getUpcomingDeadlines() {
+    return this.cbamService.getUpcomingDeadlines();
   }
 }

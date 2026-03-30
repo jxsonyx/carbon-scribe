@@ -10,7 +10,6 @@ import { SecurityService } from '../security/security.service';
 describe('CbamService', () => {
   let service: CbamService;
   let prisma: PrismaService;
-  let securityService: SecurityService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -53,7 +52,6 @@ describe('CbamService', () => {
 
     service = module.get<CbamService>(CbamService);
     prisma = module.get<PrismaService>(PrismaService);
-    securityService = module.get<SecurityService>(SecurityService);
   });
 
   it('should be defined', () => {

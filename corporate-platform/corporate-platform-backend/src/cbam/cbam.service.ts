@@ -1,6 +1,5 @@
 import {
   Injectable,
-  NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../shared/database/prisma.service';
@@ -242,7 +241,7 @@ export class CbamService {
   }
 
   // Deadlines
-  async getUpcomingDeadlines(companyId: string) {
-    return this.quarterlyReportService.getUpcomingDeadlines(companyId);
+  async getUpcomingDeadlines() {
+    return this.quarterlyReportService.getUpcomingDeadlines();
   }
 }
