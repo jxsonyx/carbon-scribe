@@ -139,9 +139,16 @@ func TestCollaborationService_InviteUser_Success(t *testing.T) {
 	service := NewService(mockRepo)
 	ctx := context.Background()
 	projectID := "project-123"
-	invitedBy := "user-456"
+	invitedBy := "owner-user"
 	email := "invitee@example.com"
 	role := "Contributor"
+
+	// Mock the permission check
+	mockRepo.On("GetMember", ctx, projectID, invitedBy).Return(&ProjectMember{
+		ProjectID: projectID,
+		UserID:    invitedBy,
+		Role:      "owner",
+	}, nil)
 
 	mockRepo.On("CreateInvitation", ctx, mock.AnythingOfType("*collaboration.ProjectInvitation")).Return(nil)
 	mockRepo.On("CreateActivity", ctx, mock.AnythingOfType("*collaboration.ActivityLog")).Return(nil)
@@ -169,9 +176,16 @@ func TestCollaborationService_InviteUser_RepositoryError(t *testing.T) {
 	service := NewService(mockRepo)
 	ctx := context.Background()
 	projectID := "project-123"
-	invitedBy := "user-456"
+	invitedBy := "owner-user"
 	email := "invitee@example.com"
 	role := "Contributor"
+
+	// Mock the permission check
+	mockRepo.On("GetMember", ctx, projectID, invitedBy).Return(&ProjectMember{
+		ProjectID: projectID,
+		UserID:    invitedBy,
+		Role:      "owner",
+	}, nil)
 
 	expectedErr := errors.New("database error")
 	mockRepo.On("CreateInvitation", ctx, mock.AnythingOfType("*collaboration.ProjectInvitation")).Return(expectedErr)
@@ -182,6 +196,34 @@ func TestCollaborationService_InviteUser_RepositoryError(t *testing.T) {
 	// Assert
 	assert.Error(t, err)
 	assert.Equal(t, expectedErr, err)
+	assert.Nil(t, invitation)
+
+	mockRepo.AssertExpectations(t)
+}
+
+func TestCollaborationService_InviteUser_PermissionDenied(t *testing.T) {
+	// Arrange
+	mockRepo := new(MockRepository)
+	service := NewService(mockRepo)
+	ctx := context.Background()
+	projectID := "project-123"
+	invitedBy := "contributor-user"
+	email := "invitee@example.com"
+	role := "Contributor"
+
+	// Mock the permission check - contributor role
+	mockRepo.On("GetMember", ctx, projectID, invitedBy).Return(&ProjectMember{
+		ProjectID: projectID,
+		UserID:    invitedBy,
+		Role:      "contributor",
+	}, nil)
+
+	// Act
+	invitation, err := service.InviteUser(ctx, projectID, invitedBy, email, role)
+
+	// Assert
+	assert.Error(t, err)
+	assert.Equal(t, "insufficient permissions", err.Error())
 	assert.Nil(t, invitation)
 
 	mockRepo.AssertExpectations(t)
@@ -352,12 +394,20 @@ func TestCollaborationService_RemoveMember_Success(t *testing.T) {
 	service := NewService(mockRepo)
 	ctx := context.Background()
 	projectID := "project-123"
-	userID := "user-456"
+	requestingUserID := "owner-user"
+	targetUserID := "user-456"
 
-	mockRepo.On("RemoveMember", ctx, projectID, userID).Return(nil)
+	// Mock the permission check
+	mockRepo.On("GetMember", ctx, projectID, requestingUserID).Return(&ProjectMember{
+		ProjectID: projectID,
+		UserID:    requestingUserID,
+		Role:      "owner",
+	}, nil)
+
+	mockRepo.On("RemoveMember", ctx, projectID, targetUserID).Return(nil)
 
 	// Act
-	err := service.RemoveMember(ctx, projectID, userID)
+	err := service.RemoveMember(ctx, projectID, requestingUserID, targetUserID)
 
 	// Assert
 	require.NoError(t, err)
@@ -371,17 +421,51 @@ func TestCollaborationService_RemoveMember_RepositoryError(t *testing.T) {
 	service := NewService(mockRepo)
 	ctx := context.Background()
 	projectID := "project-123"
-	userID := "user-456"
+	requestingUserID := "owner-user"
+	targetUserID := "user-456"
+
+	// Mock the permission check
+	mockRepo.On("GetMember", ctx, projectID, requestingUserID).Return(&ProjectMember{
+		ProjectID: projectID,
+		UserID:    requestingUserID,
+		Role:      "owner",
+	}, nil)
 
 	expectedErr := errors.New("database error")
-	mockRepo.On("RemoveMember", ctx, projectID, userID).Return(expectedErr)
+	mockRepo.On("RemoveMember", ctx, projectID, targetUserID).Return(expectedErr)
 
 	// Act
-	err := service.RemoveMember(ctx, projectID, userID)
+	err := service.RemoveMember(ctx, projectID, requestingUserID, targetUserID)
 
 	// Assert
 	assert.Error(t, err)
 	assert.Equal(t, expectedErr, err)
+
+	mockRepo.AssertExpectations(t)
+}
+
+func TestCollaborationService_RemoveMember_PermissionDenied(t *testing.T) {
+	// Arrange
+	mockRepo := new(MockRepository)
+	service := NewService(mockRepo)
+	ctx := context.Background()
+	projectID := "project-123"
+	requestingUserID := "contributor-user"
+	targetUserID := "user-456"
+
+	// Mock the permission check - contributor role
+	mockRepo.On("GetMember", ctx, projectID, requestingUserID).Return(&ProjectMember{
+		ProjectID: projectID,
+		UserID:    requestingUserID,
+		Role:      "contributor",
+	}, nil)
+
+	// Act
+	err := service.RemoveMember(ctx, projectID, requestingUserID, targetUserID)
+
+	// Assert
+	assert.Error(t, err)
+	assert.Equal(t, "insufficient permissions", err.Error())
 
 	mockRepo.AssertExpectations(t)
 }

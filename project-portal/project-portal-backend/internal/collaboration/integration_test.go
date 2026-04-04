@@ -19,7 +19,7 @@ func TestCollaborationIntegration_EndToEndFlow(t *testing.T) {
 	repo := &FakeCollaborationRepo{}
 	router := newCollaborationTestRouter(repo, tokenManager)
 
-	token := bearerTokenForUser(t, tokenManager, "integration-user-1")
+	token := bearerTokenForUser(t, tokenManager, "owner-user-1")
 
 	t.Run("invite user", func(t *testing.T) {
 		body := map[string]any{"email": "new-user@example.com", "role": "Contributor"}
@@ -54,7 +54,7 @@ func TestCollaborationIntegration_EndToEndFlow(t *testing.T) {
 		assert.Equal(t, http.StatusCreated, resp.Code, "body=%s", resp.Body.String())
 		require.NotNil(t, repo.CreatedComment)
 		assert.Equal(t, "project-1", repo.CreatedComment.ProjectID)
-		assert.Equal(t, "integration-user-1", repo.CreatedComment.UserID)
+		assert.Equal(t, "owner-user-1", repo.CreatedComment.UserID)
 		assert.Equal(t, "Can we update this section?", repo.CreatedComment.Content)
 	})
 
@@ -73,7 +73,7 @@ func TestCollaborationIntegration_EndToEndFlow(t *testing.T) {
 		assert.Equal(t, http.StatusCreated, resp.Code, "body=%s", resp.Body.String())
 		require.NotNil(t, repo.CreatedTask)
 		assert.Equal(t, "project-1", repo.CreatedTask.ProjectID)
-		assert.Equal(t, "integration-user-1", repo.CreatedTask.CreatedBy)
+		assert.Equal(t, "owner-user-1", repo.CreatedTask.CreatedBy)
 		assert.Equal(t, "Validate project geofence", repo.CreatedTask.Title)
 	})
 

@@ -228,7 +228,7 @@ func TestCollaborationHandler_InviteUser_Contract(t *testing.T) {
 	repo := &FakeCollaborationRepo{}
 	router := newCollaborationTestRouter(repo, tokenManager)
 
-	validToken := bearerTokenForUser(t, tokenManager, "inviter-user")
+	validToken := bearerTokenForUser(t, tokenManager, "owner-user")
 
 	tests := []struct {
 		name       string

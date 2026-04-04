@@ -105,7 +105,7 @@ func TestInviteUserActivityUsesJWTActorID(t *testing.T) {
 	repo := &FakeCollaborationRepo{}
 	router := newCollaborationTestRouter(repo, tokenManager)
 
-	token := bearerTokenForUser(t, tokenManager, "inviter-1")
+	token := bearerTokenForUser(t, tokenManager, "owner-user-1")
 	body := map[string]any{
 		"email": "invitee@example.com",
 		"role":  "Contributor",
@@ -128,7 +128,7 @@ func TestInviteUserActivityUsesJWTActorID(t *testing.T) {
 		t.Fatalf("expected invite activity log")
 	}
 	lastActivity := repo.Activities[len(repo.Activities)-1]
-	if lastActivity.UserID != "inviter-1" {
+	if lastActivity.UserID != "owner-user-1" {
 		t.Fatalf("expected actor user id from token, got %q", lastActivity.UserID)
 	}
 }

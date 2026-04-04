@@ -19,9 +19,16 @@ func TestInvitationLifecycle_CreateToAccept(t *testing.T) {
 	ctx := context.Background()
 
 	projectID := "project-123"
-	invitedBy := "user-456"
+	invitedBy := "owner-user-456" // Use owner role for permission
 	email := "invitee@example.com"
 	role := "Contributor"
+
+	// Mock permission check
+	mockRepo.On("GetMember", ctx, projectID, invitedBy).Return(&ProjectMember{
+		ProjectID: projectID,
+		UserID:    invitedBy,
+		Role:      "owner",
+	}, nil)
 
 	// Mock invitation creation
 	mockRepo.On("CreateInvitation", ctx, mock.AnythingOfType("*collaboration.ProjectInvitation")).Return(nil).Once()
@@ -82,9 +89,16 @@ func TestInvitationLifecycle_CreateToExpire(t *testing.T) {
 	ctx := context.Background()
 
 	projectID := "project-123"
-	invitedBy := "user-456"
+	invitedBy := "owner-user-456" // Use owner role for permission
 	email := "invitee@example.com"
 	role := "Contributor"
+
+	// Mock permission check
+	mockRepo.On("GetMember", ctx, projectID, invitedBy).Return(&ProjectMember{
+		ProjectID: projectID,
+		UserID:    invitedBy,
+		Role:      "owner",
+	}, nil)
 
 	mockRepo.On("CreateInvitation", ctx, mock.AnythingOfType("*collaboration.ProjectInvitation")).Return(nil).Once()
 	mockRepo.On("CreateActivity", ctx, mock.AnythingOfType("*collaboration.ActivityLog")).Return(nil).Once()
@@ -142,9 +156,16 @@ func TestInvitationLifecycle_CreateToCancel(t *testing.T) {
 	ctx := context.Background()
 
 	projectID := "project-123"
-	invitedBy := "user-456"
+	invitedBy := "owner-user-456" // Use owner role for permission
 	email := "invitee@example.com"
 	role := "Contributor"
+
+	// Mock permission check
+	mockRepo.On("GetMember", ctx, projectID, invitedBy).Return(&ProjectMember{
+		ProjectID: projectID,
+		UserID:    invitedBy,
+		Role:      "owner",
+	}, nil)
 
 	mockRepo.On("CreateInvitation", ctx, mock.AnythingOfType("*collaboration.ProjectInvitation")).Return(nil).Once()
 	mockRepo.On("CreateActivity", ctx, mock.AnythingOfType("*collaboration.ActivityLog")).Return(nil).Once()
@@ -201,9 +222,16 @@ func TestInvitationLifecycle_ResendPendingInvitation(t *testing.T) {
 	ctx := context.Background()
 
 	projectID := "project-123"
-	invitedBy := "user-456"
+	invitedBy := "owner-user-456" // Use owner role for permission
 	email := "invitee@example.com"
 	role := "Contributor"
+
+	// Mock permission check
+	mockRepo.On("GetMember", ctx, projectID, invitedBy).Return(&ProjectMember{
+		ProjectID: projectID,
+		UserID:    invitedBy,
+		Role:      "owner",
+	}, nil)
 
 	// Create initial invitation
 	mockRepo.On("CreateInvitation", ctx, mock.AnythingOfType("*collaboration.ProjectInvitation")).Return(nil).Once()
@@ -365,10 +393,17 @@ func TestInvitationLifecycle_TokenUniqueness(t *testing.T) {
 	ctx := context.Background()
 
 	projectID := "project-123"
-	invitedBy := "user-456"
+	invitedBy := "owner-user-456" // Use owner role for permission
 	email1 := "invitee1@example.com"
 	email2 := "invitee2@example.com"
 	role := "Contributor"
+
+	// Mock permission check for first invitation
+	mockRepo.On("GetMember", ctx, projectID, invitedBy).Return(&ProjectMember{
+		ProjectID: projectID,
+		UserID:    invitedBy,
+		Role:      "owner",
+	}, nil).Once()
 
 	// Create first invitation
 	mockRepo.On("CreateInvitation", ctx, mock.AnythingOfType("*collaboration.ProjectInvitation")).Return(nil).Once()
@@ -381,6 +416,13 @@ func TestInvitationLifecycle_TokenUniqueness(t *testing.T) {
 	mockRepo.AssertExpectations(t)
 
 	// Create second invitation
+	// Mock permission check for second invitation
+	mockRepo.On("GetMember", ctx, projectID, invitedBy).Return(&ProjectMember{
+		ProjectID: projectID,
+		UserID:    invitedBy,
+		Role:      "owner",
+	}, nil).Once()
+
 	mockRepo.On("CreateInvitation", ctx, mock.AnythingOfType("*collaboration.ProjectInvitation")).Return(nil).Once()
 	mockRepo.On("CreateActivity", ctx, mock.AnythingOfType("*collaboration.ActivityLog")).Return(nil).Once()
 
@@ -431,9 +473,16 @@ func TestInvitationLifecycle_ExpirationTiming(t *testing.T) {
 			ctx := context.Background()
 
 			projectID := "project-123"
-			invitedBy := "user-456"
+			invitedBy := "owner-user-456" // Use owner role for permission
 			email := "invitee@example.com"
 			role := "Contributor"
+
+			// Mock permission check
+			mockRepo.On("GetMember", ctx, projectID, invitedBy).Return(&ProjectMember{
+				ProjectID: projectID,
+				UserID:    invitedBy,
+				Role:      "owner",
+			}, nil)
 
 			mockRepo.On("CreateInvitation", ctx, mock.AnythingOfType("*collaboration.ProjectInvitation")).Return(nil).Once()
 			mockRepo.On("CreateActivity", ctx, mock.AnythingOfType("*collaboration.ActivityLog")).Return(nil).Once()
@@ -464,9 +513,16 @@ func TestInvitationLifecycle_EmailUniquenessInProject(t *testing.T) {
 	ctx := context.Background()
 
 	projectID := "project-123"
-	invitedBy := "user-456"
+	invitedBy := "owner-user-456" // Use owner role for permission
 	email := "invitee@example.com"
 	role := "Contributor"
+
+	// Mock permission check for first invitation
+	mockRepo.On("GetMember", ctx, projectID, invitedBy).Return(&ProjectMember{
+		ProjectID: projectID,
+		UserID:    invitedBy,
+		Role:      "owner",
+	}, nil).Once()
 
 	// Create first invitation
 	mockRepo.On("CreateInvitation", ctx, mock.AnythingOfType("*collaboration.ProjectInvitation")).Return(nil).Once()

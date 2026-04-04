@@ -138,8 +138,16 @@ func (h *Handler) ListMembers(c *gin.Context) {
 
 func (h *Handler) RemoveMember(c *gin.Context) {
 	projectID := c.Param("id")
-	userID := c.Param("userId")
-	if err := h.service.RemoveMember(c.Request.Context(), projectID, userID); err != nil {
+	targetUserID := c.Param("userId")
+
+	// Get the requesting user ID from context
+	requestingUserID, err := authctx.GetUserIDFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	if err := h.service.RemoveMember(c.Request.Context(), projectID, requestingUserID, targetUserID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

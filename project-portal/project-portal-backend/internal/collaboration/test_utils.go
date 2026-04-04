@@ -3,6 +3,8 @@ package collaboration
 import (
 	"context"
 	"errors"
+	"strings"
+	"time"
 )
 
 // FakeCollaborationRepo is a mock implementation of the Repository interface for testing
@@ -23,7 +25,25 @@ func (f *FakeCollaborationRepo) AddMember(ctx context.Context, member *ProjectMe
 }
 
 func (f *FakeCollaborationRepo) GetMember(ctx context.Context, projectID, userID string) (*ProjectMember, error) {
-	return nil, errors.New("not implemented")
+	// For testing purposes, return a member with a role based on the userID
+	// This allows us to test permission scenarios
+	role := "viewer" // default
+	if strings.Contains(userID, "owner") {
+		role = "owner"
+	} else if strings.Contains(userID, "manager") {
+		role = "manager"
+	} else if strings.Contains(userID, "contributor") {
+		role = "contributor"
+	}
+
+	return &ProjectMember{
+		ProjectID:   projectID,
+		UserID:      userID,
+		Role:        role,
+		Permissions: []string{"read", "write"},
+		JoinedAt:    time.Now(),
+		UpdatedAt:   time.Now(),
+	}, nil
 }
 
 func (f *FakeCollaborationRepo) ListMembers(ctx context.Context, projectID string) ([]ProjectMember, error) {
@@ -83,6 +103,20 @@ func (f *FakeCollaborationRepo) CreateTask(ctx context.Context, task *Task) erro
 func (f *FakeCollaborationRepo) GetTask(ctx context.Context, taskID string) (*Task, error) {
 	if taskID == "existing-task" && f.ExistingTask != nil {
 		return f.ExistingTask, nil
+	}
+	// For integration tests, return a mock task for "task123"
+	if taskID == "task123" {
+		return &Task{
+			ID:          "task123",
+			ProjectID:   "p1",
+			Title:       "Test Task",
+			Description: "Test Description",
+			Status:      "todo",
+			Priority:    "medium",
+			CreatedBy:   "test-user",
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
+		}, nil
 	}
 	return nil, errors.New("task not found")
 }
