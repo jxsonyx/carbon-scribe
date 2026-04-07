@@ -3,6 +3,7 @@ package collaboration
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	authctx "carbon-scribe/project-portal/project-portal-backend/internal/auth"
 
@@ -21,6 +22,18 @@ func NewHandler(service *Service) *Handler {
 type InviteUserRequest struct {
 	Email string `json:"email" binding:"required,email"`
 	Role  string `json:"role" binding:"required"`
+}
+
+type inviteUserResponse struct {
+	ID        string    `json:"id"`
+	ProjectID string    `json:"project_id"`
+	Email     string    `json:"email"`
+	Role      string    `json:"role"`
+	Token     string    `json:"token"`
+	Status    string    `json:"status"`
+	ExpiresAt time.Time `json:"expires_at"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 func (h *Handler) InviteUser(c *gin.Context) {
@@ -43,7 +56,17 @@ func (h *Handler) InviteUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, invite)
+	c.JSON(http.StatusCreated, inviteUserResponse{
+		ID:        invite.ID,
+		ProjectID: invite.ProjectID,
+		Email:     invite.Email,
+		Role:      invite.Role,
+		Token:     invite.Token,
+		Status:    invite.Status,
+		ExpiresAt: invite.ExpiresAt,
+		CreatedAt: invite.CreatedAt,
+		UpdatedAt: invite.UpdatedAt,
+	})
 }
 
 func (h *Handler) GetActivities(c *gin.Context) {
@@ -138,8 +161,16 @@ func (h *Handler) ListMembers(c *gin.Context) {
 
 func (h *Handler) RemoveMember(c *gin.Context) {
 	projectID := c.Param("id")
-	userID := c.Param("userId")
-	if err := h.service.RemoveMember(c.Request.Context(), projectID, userID); err != nil {
+	targetUserID := c.Param("userId")
+
+	// Get the requesting user ID from context
+	requestingUserID, err := authctx.GetUserIDFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	if err := h.service.RemoveMember(c.Request.Context(), projectID, requestingUserID, targetUserID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

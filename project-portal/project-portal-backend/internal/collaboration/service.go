@@ -2,6 +2,7 @@ package collaboration
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
@@ -15,8 +16,29 @@ func NewService(repo Repository) *Service {
 	return &Service{repo: repo}
 }
 
+// checkUserPermission checks if a user has the required role for an operation
+func (s *Service) checkUserPermission(ctx context.Context, projectID, userID string, allowedRoles ...string) error {
+	member, err := s.repo.GetMember(ctx, projectID, userID)
+	if err != nil {
+		return errors.New("user not found in project")
+	}
+
+	for _, allowedRole := range allowedRoles {
+		if member.Role == allowedRole {
+			return nil
+		}
+	}
+
+	return errors.New("insufficient permissions")
+}
+
 // InviteUser creates an invitation for a user
 func (s *Service) InviteUser(ctx context.Context, projectID, invitedByUserID, email, role string) (*ProjectInvitation, error) {
+	// Check permission: only owners and managers can invite users
+	if err := s.checkUserPermission(ctx, projectID, invitedByUserID, "owner", "manager"); err != nil {
+		return nil, err
+	}
+
 	token := uuid.New().String()
 	invite := &ProjectInvitation{
 		ProjectID: projectID,
@@ -110,8 +132,13 @@ func (s *Service) ListMembers(ctx context.Context, projectID string) ([]ProjectM
 	return s.repo.ListMembers(ctx, projectID)
 }
 
-func (s *Service) RemoveMember(ctx context.Context, projectID, userID string) error {
-	return s.repo.RemoveMember(ctx, projectID, userID)
+func (s *Service) RemoveMember(ctx context.Context, projectID, requestingUserID, targetUserID string) error {
+	// Check permission: only owners and managers can remove members
+	if err := s.checkUserPermission(ctx, projectID, requestingUserID, "owner", "manager"); err != nil {
+		return err
+	}
+
+	return s.repo.RemoveMember(ctx, projectID, targetUserID)
 }
 
 func (s *Service) ListInvitations(ctx context.Context, projectID string) ([]ProjectInvitation, error) {
