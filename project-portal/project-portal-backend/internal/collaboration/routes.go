@@ -12,6 +12,7 @@ func RegisterRoutes(v1 *gin.RouterGroup, h *Handler, tokenManager *auth.TokenMan
 	{
 		// Project members
 		collab.GET("/projects/:id/members", h.ListMembers)
+		collab.GET("/projects/:id/members/:userId", h.GetEnrichedMember)
 		collab.DELETE("/projects/:id/members/:userId", h.RemoveMember)
 
 		// Project invitations

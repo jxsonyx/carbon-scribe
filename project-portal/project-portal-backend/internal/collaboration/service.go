@@ -5,8 +5,31 @@ import (
 	"errors"
 	"time"
 
+	"carbon-scribe/project-portal/project-portal-backend/internal/collaboration/dto"
+
 	"github.com/google/uuid"
 )
+
+// GetEnrichedMember returns a single enriched project member with profile data
+func (s *Service) GetEnrichedMember(ctx context.Context, projectID, userID string) (*dto.EnrichedProjectMemberResponse, error) {
+       m, err := s.repo.GetEnrichedMember(ctx, projectID, userID)
+       if err != nil {
+	       return nil, err
+       }
+       resp := &dto.EnrichedProjectMemberResponse{
+	       UserID:      m.UserID,
+	       DisplayName: m.DisplayName,
+	       Email:       m.Email,
+	       AvatarURL:   m.AvatarURL,
+	       Phone:       m.Phone,
+	       Location:    m.Location,
+	       Title:       m.Title,
+	       Bio:         m.Bio,
+	       Role:        m.Role,
+	       JoinedAt:    m.JoinedAt,
+       }
+       return resp, nil
+}
 
 type Service struct {
 	repo Repository
@@ -128,8 +151,30 @@ func (s *Service) CreateTask(ctx context.Context, req CreateTaskRequest, actorUs
 	return task, nil
 }
 
-func (s *Service) ListMembers(ctx context.Context, projectID string) ([]ProjectMember, error) {
-	return s.repo.ListMembers(ctx, projectID)
+
+
+func (s *Service) ListMembers(ctx context.Context, projectID string) ([]dto.EnrichedProjectMemberResponse, error) {
+       enriched, err := s.repo.ListMembers(ctx, projectID)
+       if err != nil {
+	       return nil, err
+       }
+       // Map to DTO
+       var resp []dto.EnrichedProjectMemberResponse
+       for _, m := range enriched {
+	       resp = append(resp, dto.EnrichedProjectMemberResponse{
+		       UserID:      m.UserID,
+		       DisplayName: m.DisplayName,
+		       Email:       m.Email,
+		       AvatarURL:   m.AvatarURL,
+		       Phone:       m.Phone,
+		       Location:    m.Location,
+		       Title:       m.Title,
+		       Bio:         m.Bio,
+		       Role:        m.Role,
+		       JoinedAt:    m.JoinedAt,
+	       })
+       }
+       return resp, nil
 }
 
 func (s *Service) RemoveMember(ctx context.Context, projectID, requestingUserID, targetUserID string) error {

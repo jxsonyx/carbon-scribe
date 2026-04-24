@@ -26,6 +26,24 @@ type FakeCollaborationRepo struct {
 	Resources   []SharedResource
 }
 
+	// GetEnrichedMember returns a fake enriched member for testing
+	func (f *FakeCollaborationRepo) GetEnrichedMember(ctx context.Context, projectID, userID string) (*EnrichedProjectMember, error) {
+		return &EnrichedProjectMember{
+			ID:        "fake-id",
+			ProjectID: projectID,
+			UserID:    userID,
+			Role:      "owner",
+			JoinedAt:  time.Now(),
+			DisplayName: "Fake User",
+			Email:     "fake@example.com",
+			AvatarURL: "https://example.com/avatar.png",
+			Phone:     "1234567890",
+			Location:  "Test City",
+			Title:     "Engineer",
+			Bio:       "Test bio",
+		}, nil
+	}
+
 func (f *FakeCollaborationRepo) AddMember(ctx context.Context, member *ProjectMember) error {
 	return nil
 }
@@ -52,8 +70,37 @@ func (f *FakeCollaborationRepo) GetMember(ctx context.Context, projectID, userID
 	}, nil
 }
 
-func (f *FakeCollaborationRepo) ListMembers(ctx context.Context, projectID string) ([]ProjectMember, error) {
-	return []ProjectMember{}, nil
+func (f *FakeCollaborationRepo) ListMembers(ctx context.Context, projectID string) ([]EnrichedProjectMember, error) {
+	return []EnrichedProjectMember{
+		{
+			ID:        "fake-id",
+			ProjectID: projectID,
+			UserID:    "user-1",
+			Role:      "owner",
+			JoinedAt:  time.Now(),
+			DisplayName: "Fake User 1",
+			Email:     "user1@example.com",
+			AvatarURL: "https://example.com/avatar1.png",
+			Phone:     "1234567890",
+			Location:  "Test City",
+			Title:     "Engineer",
+			Bio:       "Test bio 1",
+		},
+		{
+			ID:        "fake-id-2",
+			ProjectID: projectID,
+			UserID:    "user-2",
+			Role:      "contributor",
+			JoinedAt:  time.Now(),
+			DisplayName: "Fake User 2",
+			Email:     "user2@example.com",
+			AvatarURL: "https://example.com/avatar2.png",
+			Phone:     "0987654321",
+			Location:  "Test City 2",
+			Title:     "Designer",
+			Bio:       "Test bio 2",
+		},
+	}, nil
 }
 
 func (f *FakeCollaborationRepo) UpdateMember(ctx context.Context, member *ProjectMember) error {

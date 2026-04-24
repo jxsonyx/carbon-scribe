@@ -113,6 +113,7 @@ func TestCollaborationRoutes_PathPatternsMatchExpected(t *testing.T) {
 
 	expected := []string{
 		http.MethodGet + " /api/v1/collaboration/projects/:id/members",
+		http.MethodGet + " /api/v1/collaboration/projects/:id/members/:userId",
 		http.MethodDelete + " /api/v1/collaboration/projects/:id/members/:userId",
 		http.MethodPost + " /api/v1/collaboration/projects/:id/invite",
 		http.MethodGet + " /api/v1/collaboration/projects/:id/invitations",

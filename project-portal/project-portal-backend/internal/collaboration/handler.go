@@ -10,6 +10,18 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// GetEnrichedMember handles GET /projects/:id/members/:userId
+func (h *Handler) GetEnrichedMember(c *gin.Context) {
+       projectID := c.Param("id")
+       userID := c.Param("userId")
+       member, err := h.service.GetEnrichedMember(c.Request.Context(), projectID, userID)
+       if err != nil {
+	       c.JSON(http.StatusNotFound, gin.H{"error": "member not found"})
+	       return
+       }
+       c.JSON(http.StatusOK, member)
+}
+
 type Handler struct {
 	service *Service
 }
@@ -150,13 +162,13 @@ func (h *Handler) CreateResource(c *gin.Context) {
 }
 
 func (h *Handler) ListMembers(c *gin.Context) {
-	projectID := c.Param("id")
-	members, err := h.service.ListMembers(c.Request.Context(), projectID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, members)
+       projectID := c.Param("id")
+       members, err := h.service.ListMembers(c.Request.Context(), projectID)
+       if err != nil {
+	       c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	       return
+       }
+       c.JSON(http.StatusOK, members)
 }
 
 func (h *Handler) RemoveMember(c *gin.Context) {
