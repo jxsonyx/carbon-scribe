@@ -101,7 +101,7 @@ const FinancingPage = () => {
       {activeSection === 'overview' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <TokenizationStatus projectId={projectId} />
-          <ForwardSale />
+          <ForwardSale projectId={projectId} />
         </div>
       )}
 
@@ -110,7 +110,7 @@ const FinancingPage = () => {
       )}
 
       {activeSection === 'forward-sales' && (
-        <ForwardSale />
+        <ForwardSale projectId={projectId} />
       )}
 
       {activeSection === 'payments' && (
