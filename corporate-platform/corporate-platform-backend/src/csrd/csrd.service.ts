@@ -3,12 +3,17 @@ import { PrismaService } from '../shared/database/prisma.service';
 import { MaterialityAssessmentService } from './services/materiality-assessment.service';
 import { EsrsDisclosureService } from './services/esrs-disclosure.service';
 import { ReportGeneratorService } from './services/report-generator.service';
+import { AssuranceService } from './services/assurance.service';
+import { SecurityService } from '../security/security.service';
 import { CreateMaterialityAssessmentDto } from './dto/assessment.dto';
 import {
   DisclosureQueryDto,
   RecordDisclosureDto,
+  UpdateAssuranceDto,
 } from './dto/disclosure-query.dto';
-import { SecurityService } from '../security/security.service';
+import { EsrsStandard } from './interfaces/disclosure.interface';
+
+const ALL_ESRS_STANDARDS = Object.values(EsrsStandard);
 
 @Injectable()
 export class CsrdService {
@@ -19,16 +24,19 @@ export class CsrdService {
     private readonly materialityService: MaterialityAssessmentService,
     private readonly disclosureService: EsrsDisclosureService,
     private readonly reportService: ReportGeneratorService,
+    private readonly assuranceService: AssuranceService,
     private readonly securityService: SecurityService,
   ) {}
 
   async assessMateriality(
     companyId: string,
     dto: CreateMaterialityAssessmentDto,
+    userId = 'system',
   ) {
     const assessment = await this.materialityService.createAssessment(
       companyId,
       dto,
+      userId,
     );
 
     await this.securityService.logEvent({
@@ -45,8 +53,16 @@ export class CsrdService {
     return this.materialityService.getCurrent(companyId);
   }
 
-  async recordDisclosure(companyId: string, dto: RecordDisclosureDto) {
-    const disclosure = await this.disclosureService.record(companyId, dto);
+  async recordDisclosure(
+    companyId: string,
+    dto: RecordDisclosureDto,
+    userId = 'system',
+  ) {
+    const disclosure = await this.disclosureService.record(
+      companyId,
+      dto,
+      userId,
+    );
 
     await this.securityService.logEvent({
       eventType: 'csrd.disclosure.recorded' as any,
@@ -62,12 +78,12 @@ export class CsrdService {
     return this.disclosureService.list(companyId, query);
   }
 
-  async getRequirements(standard: string) {
+  async getRequirements(standard?: string) {
     return this.disclosureService.getRequirements(standard);
   }
 
-  async generateReport(companyId: string, year: number) {
-    const report = await this.reportService.generate(companyId, year);
+  async generateReport(companyId: string, year: number, userId = 'system') {
+    const report = await this.reportService.generate(companyId, year, userId);
 
     await this.securityService.logEvent({
       eventType: 'csrd.report.generated' as any,
@@ -86,28 +102,72 @@ export class CsrdService {
     });
   }
 
+  async updateAssurance(
+    companyId: string,
+    disclosureId: string,
+    dto: UpdateAssuranceDto,
+    userId = 'system',
+  ) {
+    return this.assuranceService.updateAssurance(
+      companyId,
+      disclosureId,
+      dto.assuranceLevel,
+      dto.assuredBy,
+      userId,
+    );
+  }
+
   async getReadinessScorecard(companyId: string) {
-    // Basic readiness scorecard logic
-    const assessments = await this.prisma.materialityAssessment.count({
-      where: { companyId, status: 'COMPLETED' },
-    });
-    const disclosures = await this.prisma.esrsDisclosure.count({
-      where: { companyId },
-    });
-    const reports = await this.prisma.csrdReport.count({
-      where: { companyId, status: 'SUBMITTED' },
-    });
+    const [completedAssessments, disclosuresByStandard, submittedReports] =
+      await Promise.all([
+        this.prisma.materialityAssessment.count({
+          where: { companyId, status: 'COMPLETED' },
+        }),
+        this.prisma.esrsDisclosure.groupBy({
+          by: ['standard'],
+          where: { companyId },
+          _count: true,
+        }),
+        this.prisma.csrdReport.count({
+          where: { companyId, status: 'SUBMITTED' },
+        }),
+      ]);
+
+    const coveredStandards = new Set(
+      disclosuresByStandard.map((d) => d.standard),
+    );
+    const missingStandards = ALL_ESRS_STANDARDS.filter(
+      (s) => !coveredStandards.has(s),
+    );
+    const totalDisclosures = disclosuresByStandard.reduce(
+      (sum, d) => sum + d._count,
+      0,
+    );
+
+    // Score: 30 pts materiality, 50 pts disclosure coverage, 20 pts submissions
+    const disclosureCoverage =
+      coveredStandards.size / ALL_ESRS_STANDARDS.length;
+    const overallScore = Math.round(
+      (completedAssessments > 0 ? 30 : 0) +
+        disclosureCoverage * 50 +
+        (submittedReports > 0 ? 20 : 0),
+    );
 
     return {
       companyId,
-      overallScore: assessments > 0 ? (disclosures > 10 ? 100 : 50) : 10,
+      overallScore,
       milestones: {
-        doubleMaterialityComplete: assessments > 0,
-        esrsDisclosuresStarted: disclosures > 0,
-        assuranceReady: disclosures > 50,
-        reportingSubmissions: reports,
+        doubleMaterialityComplete: completedAssessments > 0,
+        esrsDisclosuresStarted: totalDisclosures > 0,
+        assuranceReady: totalDisclosures >= 50,
+        reportingSubmissions: submittedReports,
       },
-      missingStandards: ['ESRS E1', 'ESRS S1'], // Placeholder
+      coverage: {
+        standardsCovered: coveredStandards.size,
+        totalStandards: ALL_ESRS_STANDARDS.length,
+        totalDisclosures,
+      },
+      missingStandards,
     };
   }
 }
