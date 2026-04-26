@@ -17,6 +17,10 @@ func RegisterRoutes(v1 *gin.RouterGroup, h *Handler, tokenManager *auth.TokenMan
 		// Project invitations
 		collab.POST("/projects/:id/invite", h.InviteUser)
 		collab.GET("/projects/:id/invitations", h.ListInvitations)
+		collab.POST("/invitations/:invitationId/resend", h.ResendInvitation)
+		collab.POST("/invitations/:invitationId/cancel", h.CancelInvitation)
+		collab.POST("/invitations/:invitationId/accept", h.AcceptInvitation)
+		collab.POST("/invitations/:invitationId/decline", h.DeclineInvitation)
 
 		// Activity feed
 		collab.GET("/projects/:id/activities", h.GetActivities)

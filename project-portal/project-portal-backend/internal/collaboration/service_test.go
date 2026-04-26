@@ -52,6 +52,14 @@ func (m *MockRepository) CreateInvitation(ctx context.Context, invite *ProjectIn
 	return args.Error(0)
 }
 
+func (m *MockRepository) GetInvitation(ctx context.Context, invitationID string) (*ProjectInvitation, error) {
+	args := m.Called(ctx, invitationID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*ProjectInvitation), args.Error(1)
+}
+
 func (m *MockRepository) GetInvitationByToken(ctx context.Context, token string) (*ProjectInvitation, error) {
 	args := m.Called(ctx, token)
 	if args.Get(0) == nil {
@@ -66,6 +74,11 @@ func (m *MockRepository) ListInvitations(ctx context.Context, projectID string) 
 		return nil, args.Error(1)
 	}
 	return args.Get(0).([]ProjectInvitation), args.Error(1)
+}
+
+func (m *MockRepository) UpdateInvitation(ctx context.Context, invite *ProjectInvitation) error {
+	args := m.Called(ctx, invite)
+	return args.Error(0)
 }
 
 func (m *MockRepository) CreateActivity(ctx context.Context, activity *ActivityLog) error {

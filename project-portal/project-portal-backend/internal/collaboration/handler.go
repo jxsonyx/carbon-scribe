@@ -254,3 +254,94 @@ func (h *Handler) ListResources(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, resources)
 }
+
+// Invitation Lifecycle Handlers
+
+func (h *Handler) ResendInvitation(c *gin.Context) {
+	requestingUserID, err := authctx.GetUserIDFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	invitationID := c.Param("invitationId")
+
+	invite, err := h.service.ResendInvitation(c.Request.Context(), invitationID, requestingUserID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, inviteUserResponse{
+		ID:        invite.ID,
+		ProjectID: invite.ProjectID,
+		Email:     invite.Email,
+		Role:      invite.Role,
+		Token:     invite.Token,
+		Status:    invite.Status,
+		ExpiresAt: invite.ExpiresAt,
+		CreatedAt: invite.CreatedAt,
+		UpdatedAt: invite.UpdatedAt,
+	})
+}
+
+func (h *Handler) CancelInvitation(c *gin.Context) {
+	requestingUserID, err := authctx.GetUserIDFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	invitationID := c.Param("invitationId")
+
+	if err := h.service.CancelInvitation(c.Request.Context(), invitationID, requestingUserID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"ok": true})
+}
+
+func (h *Handler) AcceptInvitation(c *gin.Context) {
+	invitationID := c.Param("invitationId")
+
+	invite, err := h.service.AcceptInvitation(c.Request.Context(), invitationID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, inviteUserResponse{
+		ID:        invite.ID,
+		ProjectID: invite.ProjectID,
+		Email:     invite.Email,
+		Role:      invite.Role,
+		Token:     invite.Token,
+		Status:    invite.Status,
+		ExpiresAt: invite.ExpiresAt,
+		CreatedAt: invite.CreatedAt,
+		UpdatedAt: invite.UpdatedAt,
+	})
+}
+
+func (h *Handler) DeclineInvitation(c *gin.Context) {
+	invitationID := c.Param("invitationId")
+
+	invite, err := h.service.DeclineInvitation(c.Request.Context(), invitationID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, inviteUserResponse{
+		ID:        invite.ID,
+		ProjectID: invite.ProjectID,
+		Email:     invite.Email,
+		Role:      invite.Role,
+		Token:     invite.Token,
+		Status:    invite.Status,
+		ExpiresAt: invite.ExpiresAt,
+		CreatedAt: invite.CreatedAt,
+		UpdatedAt: invite.UpdatedAt,
+	})
+}

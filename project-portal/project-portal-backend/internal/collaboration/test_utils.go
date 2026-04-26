@@ -77,6 +77,19 @@ func (f *FakeCollaborationRepo) CreateInvitation(ctx context.Context, invite *Pr
 	return nil
 }
 
+func (f *FakeCollaborationRepo) GetInvitation(ctx context.Context, invitationID string) (*ProjectInvitation, error) {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+
+	for _, invitation := range f.Invitations {
+		if invitation.ID == invitationID {
+			clone := invitation
+			return &clone, nil
+		}
+	}
+	return nil, errors.New("invitation not found")
+}
+
 func (f *FakeCollaborationRepo) GetInvitationByToken(ctx context.Context, token string) (*ProjectInvitation, error) {
 	f.mu.RLock()
 	defer f.mu.RUnlock()
@@ -101,6 +114,19 @@ func (f *FakeCollaborationRepo) ListInvitations(ctx context.Context, projectID s
 		}
 	}
 	return invitations, nil
+}
+
+func (f *FakeCollaborationRepo) UpdateInvitation(ctx context.Context, invite *ProjectInvitation) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	for index, existing := range f.Invitations {
+		if existing.ID == invite.ID {
+			f.Invitations[index] = *invite
+			return nil
+		}
+	}
+	return errors.New("invitation not found")
 }
 
 func (f *FakeCollaborationRepo) CreateActivity(ctx context.Context, activity *ActivityLog) error {

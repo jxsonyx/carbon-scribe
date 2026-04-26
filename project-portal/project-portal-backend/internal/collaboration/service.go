@@ -145,6 +145,155 @@ func (s *Service) ListInvitations(ctx context.Context, projectID string) ([]Proj
 	return s.repo.ListInvitations(ctx, projectID)
 }
 
+// ResendInvitation resends an existing pending invitation
+func (s *Service) ResendInvitation(ctx context.Context, invitationID, requestingUserID string) (*ProjectInvitation, error) {
+	invite, err := s.repo.GetInvitation(ctx, invitationID)
+	if err != nil {
+		return nil, errors.New("invitation not found")
+	}
+
+	// Check permission: only managers/owners can resend
+	if err := s.checkUserPermission(ctx, invite.ProjectID, requestingUserID, "owner", "manager"); err != nil {
+		return nil, err
+	}
+
+	// Can only resend pending invitations
+	if invite.Status != "pending" {
+		return nil, errors.New("can only resend pending invitations")
+	}
+
+	// Check rate limit: max 3 resends
+	if invite.ResentCount >= 3 {
+		return nil, errors.New("maximum resend limit reached")
+	}
+
+	now := time.Now()
+	invite.ResentAt = &now
+	invite.ResentCount++
+	invite.ExpiresAt = now.Add(48 * time.Hour)
+	invite.UpdatedAt = now
+
+	if err := s.repo.UpdateInvitation(ctx, invite); err != nil {
+		return nil, err
+	}
+
+	// Log activity
+	_ = s.repo.CreateActivity(ctx, &ActivityLog{
+		ProjectID: invite.ProjectID,
+		UserID:    requestingUserID,
+		Type:      "user",
+		Action:    "invitation_resent",
+		Metadata:  map[string]any{"email": invite.Email, "resent_count": invite.ResentCount},
+		CreatedAt: now,
+	})
+
+	return invite, nil
+}
+
+// CancelInvitation cancels a pending invitation
+func (s *Service) CancelInvitation(ctx context.Context, invitationID, requestingUserID string) error {
+	invite, err := s.repo.GetInvitation(ctx, invitationID)
+	if err != nil {
+		return errors.New("invitation not found")
+	}
+
+	// Check permission: only managers/owners can cancel
+	if err := s.checkUserPermission(ctx, invite.ProjectID, requestingUserID, "owner", "manager"); err != nil {
+		return err
+	}
+
+	// Can only cancel pending invitations
+	if invite.Status != "pending" {
+		return errors.New("can only cancel pending invitations")
+	}
+
+	invite.Status = "cancelled"
+	invite.UpdatedAt = time.Now()
+
+	if err := s.repo.UpdateInvitation(ctx, invite); err != nil {
+		return err
+	}
+
+	// Log activity
+	_ = s.repo.CreateActivity(ctx, &ActivityLog{
+		ProjectID: invite.ProjectID,
+		UserID:    requestingUserID,
+		Type:      "user",
+		Action:    "invitation_cancelled",
+		Metadata:  map[string]any{"email": invite.Email},
+		CreatedAt: invite.UpdatedAt,
+	})
+
+	return nil
+}
+
+// AcceptInvitation accepts an invitation (called by the invited user)
+func (s *Service) AcceptInvitation(ctx context.Context, invitationID string) (*ProjectInvitation, error) {
+	invite, err := s.repo.GetInvitation(ctx, invitationID)
+	if err != nil {
+		return nil, errors.New("invitation not found")
+	}
+
+	// Can only accept pending invitations
+	if invite.Status != "pending" {
+		return nil, errors.New("invitation is not pending")
+	}
+
+	// Check if invitation is expired
+	if time.Now().After(invite.ExpiresAt) {
+		return nil, errors.New("invitation has expired")
+	}
+
+	invite.Status = "accepted"
+	invite.UpdatedAt = time.Now()
+
+	if err := s.repo.UpdateInvitation(ctx, invite); err != nil {
+		return nil, err
+	}
+
+	// Log activity
+	_ = s.repo.CreateActivity(ctx, &ActivityLog{
+		ProjectID: invite.ProjectID,
+		Type:      "user",
+		Action:    "invitation_accepted",
+		Metadata:  map[string]any{"email": invite.Email},
+		CreatedAt: invite.UpdatedAt,
+	})
+
+	return invite, nil
+}
+
+// DeclineInvitation declines an invitation (called by the invited user)
+func (s *Service) DeclineInvitation(ctx context.Context, invitationID string) (*ProjectInvitation, error) {
+	invite, err := s.repo.GetInvitation(ctx, invitationID)
+	if err != nil {
+		return nil, errors.New("invitation not found")
+	}
+
+	// Can only decline pending invitations
+	if invite.Status != "pending" {
+		return nil, errors.New("invitation is not pending")
+	}
+
+	invite.Status = "declined"
+	invite.UpdatedAt = time.Now()
+
+	if err := s.repo.UpdateInvitation(ctx, invite); err != nil {
+		return nil, err
+	}
+
+	// Log activity
+	_ = s.repo.CreateActivity(ctx, &ActivityLog{
+		ProjectID: invite.ProjectID,
+		Type:      "user",
+		Action:    "invitation_declined",
+		Metadata:  map[string]any{"email": invite.Email},
+		CreatedAt: invite.UpdatedAt,
+	})
+
+	return invite, nil
+}
+
 func (s *Service) ListComments(ctx context.Context, projectID string) ([]Comment, error) {
 	return s.repo.ListComments(ctx, projectID)
 }
