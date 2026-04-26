@@ -159,6 +159,7 @@ describe('TeamSlice', () => {
         expires_at: '2023-01-15T00:00:00Z',
         created_at: '2023-01-01T00:00:00Z',
         updated_at: '2023-01-01T00:00:00Z',
+        resent_count: 0,
       };
       mockApi.inviteUserApi.mockResolvedValue(mockInvitation);
 
@@ -187,6 +188,7 @@ describe('TeamSlice', () => {
           expires_at: '2023-01-15T00:00:00Z',
           created_at: '2023-01-01T00:00:00Z',
           updated_at: '2023-01-01T00:00:00Z',
+          resent_count: 0,
         };
         mockApi.inviteUserApi.mockResolvedValue(mockInvitation);
 
