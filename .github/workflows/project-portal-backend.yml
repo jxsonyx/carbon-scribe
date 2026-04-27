@@ -3,12 +3,9 @@ on:
   push:
     paths:
       - 'project-portal/project-portal-backend/**'
-    branches: [main, develop]
   pull_request:
     paths:
       - 'project-portal/project-portal-backend/**'
-    branches: [main, develop]
-  workflow_dispatch:
 
 jobs:
   build-and-test:
@@ -16,17 +13,17 @@ jobs:
     defaults:
       run:
         working-directory: project-portal/project-portal-backend
-
+    
     steps:
       - uses: actions/checkout@v4
-
+      
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.21'
           cache: true
-          cache-dependency-path: project-portal/project-portal-backend/go.sum
-
+          cache-dependency-path: go.sum
+      
       - name: Check Go module
         run: |
           if [ ! -f "go.mod" ]; then
@@ -34,18 +31,20 @@ jobs:
             exit 1
           fi
           echo "✅ Go module found: $(cat go.mod | head -1)"
-
+      
       - name: Download dependencies
         run: go mod download
-
+      
       - name: Build (exclude future-tagged files)
         id: build
         run: |
           echo "🔨 Building current implementation (excluding 'future' tagged files)..."
-
+          
+          # Count packages to build
           PACKAGES=$(go list ./...)
           echo "Total packages found: $(echo "$PACKAGES" | wc -l)"
-
+          
+          # Build excluding future-tagged files
           if go build -tags "!future" ./...; then
             echo "✅ Build successful"
             echo "build_success=true" >> $GITHUB_OUTPUT
@@ -54,27 +53,28 @@ jobs:
             echo "build_success=false" >> $GITHUB_OUTPUT
             exit 1
           fi
-
+      
       - name: Test (exclude future-tagged files)
         if: steps.build.outputs.build_success == 'true'
         run: |
           echo "🧪 Testing current implementation (excluding 'future' tagged files)..."
-
+          
+          # Count test files
           TEST_FILES=$(find . -name "*_test.go" -type f | wc -l)
           echo "Test files found: $TEST_FILES"
-
+          
           if [ "$TEST_FILES" -gt 0 ]; then
             go test -tags "!future" ./...
           else
             echo "📝 No test files found (excluding future-tagged files)"
           fi
-
+      
       - name: List future-tagged files (for debugging)
         if: always()
         run: |
           echo "🔮 Future-tagged files (not included in build):"
           find . -name "*.go" -type f -exec grep -l "//go:build future" {} \; 2>/dev/null || echo "None found"
-
+      
       - name: Verify can build with future tags
         if: always()
         run: |
